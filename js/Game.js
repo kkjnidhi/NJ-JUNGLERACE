@@ -1,5 +1,13 @@
 class Game {
-  constructor() {}
+  constructor() {
+   
+
+    this.leadeboardTitle = createElement("h2");
+
+    this.leader1 = createElement("h2");
+    this.leader2 = createElement("h2");
+    this.playerMoving = false;
+  }
 
   getState() {
     var gameStateRef = database.ref("gameState");
@@ -30,12 +38,13 @@ class Game {
 
     animals = [ animal1,  animal2];
 
-   
-    //create a group for bush and grass
-  bush=new Group()
-  grass=new Group()
+    // C38 TA
+    bush = new Group();
+   grass = new Group();
+
     // Adding fuel sprite in the game
     this.addSprites(bush, 4, bushImage, 0.02);
+
     // Adding coin sprite in the game
     this.addSprites(grass, 18, grassImage, 0.09);
   }
@@ -60,15 +69,28 @@ class Game {
     form.hide();
     form.titleImg.position(40, 50);
     form.titleImg.class("gameTitleAfterEffect");
+    
+    this.leadeboardTitle.html("Leaderboard");
+    this.leadeboardTitle.class("resetText");
+    this.leadeboardTitle.position(width / 3 - 60, 40);
+
+    this.leader1.class("leadersText");
+    this.leader1.position(width / 3 - 50, 80);
+
+    this.leader2.class("leadersText");
+    this.leader2.position(width / 3 - 50, 130);
   }
 
   play() {
     this.handleElements();
+    player.getcarsAtEnd();
 
     Player.getPlayersInfo();
 
     if (allPlayers !== undefined) {
-      image(track, 0, -height * 5, width, height * 6);
+
+      image(track, 0, -height, width, height * 8);
+      this.showLeaderboard();
 
       //index of the array
       var index = 0;
@@ -80,45 +102,104 @@ class Game {
         var x = allPlayers[plr].positionX;
         var y = height - allPlayers[plr].positionY;
 
-        animals[index-1].position.x = x;
-        animals[index-1].position.y = y;
+        animals[index - 1].position.x = x;
+        animals[index - 1].position.y = y;
 
-  
+        // C38  SA
         if (index === player.index) {
           stroke(10);
-          //fill the circle with color
-          //add the ellipse to create a focus for the player 
           fill("red");
           ellipse(x, y, 60, 60);
+
           this.handleBush(index);
           this.handleGrass(index);
+    camera.position.x =    animals[index - 1].position.x;
+          camera.position.y =    animals[index - 1].position.y;
+          // Changing camera position in y direction
+         }}
+      
+      
+         const finshLine = height;
 
-         }
-      }
+         if (player.positionY > finshLine) {
+           gameState = 2;
+           //increment the rank 
+           //update the rank
+           player.rank += 1;
+           Player.updateCarsAtEnd(player.rank);
+           player.update();
+           this.showLeaderboard();
+         } 
+         if (keyIsDown(UP_ARROW)) {
+          player.positionY += 10;
+          player.update();
+        }
+         drawSprites();}}
 
-      // handling keyboard events
-      if (keyIsDown(UP_ARROW)) {
-        player.positionY += 10;
-        player.update();
-      }
+  showLeaderboard() 
+  {
+    var leader1, leader2;
+    var players = Object.values(allPlayers);
+    if ( (players[0].rank === 0 && players[1].rank === 0) ||
+    players[0].rank === 1 ) {
+      // &emsp;    This tag is used for displaying four spaces.
+      leader1 =
+        players[0].rank +
+        "&emsp;" +
+        players[0].name +
+        "&emsp;" +
+        players[0].score;
 
-      drawSprites();
+      leader2 =
+        players[1].rank +
+        "&emsp;" +
+        players[1].name +
+        "&emsp;" +
+        players[1].score;
     }
+
+    if (players[1].rank === 1) {
+      leader1 =
+        players[1].rank +
+        "&emsp;" +
+        players[1].name +
+        "&emsp;" +
+        players[1].score;
+
+      leader2 =
+        players[0].rank +
+        "&emsp;" +
+        players[0].name +
+        "&emsp;" +
+        players[0].score;
+    }
+
+    this.leader1.html(leader1);
+    this.leader2.html(leader2);
   }
 
+      // handling keyboard events
+      
+
+
   handleBush(index) {
-    // Write a overlap function  for animal and bush 
-       //remove the bush
-       animals[index-1].overlap(bush,function(collector,collected){collected.remove()
-        player.bush=185})
+    // Adding fuel
+    animals[index - 1].overlap(bush, function(collector, collected) {
+      player.bush = 185;
+      //collected is the sprite in the group collectibles that triggered
+      //the event
+      collected.remove();
+    });
   }
 
   handleGrass(index) {
-    
+    animals[index - 1].overlap(grass, function(collector, collected) {
+    //Increment the score by 21
+    player.score += 21;
       player.update();
-    // Write a overlap function  for animal and grass
-       //remove the grass
-       animals[index-1].overlap(grass,function(collector,collected){collected.remove()
-        player.grass=185})
+      //collected is the sprite in the group collectibles that triggered
+      //the event
+      collected.remove();
+    });
   }
 }
